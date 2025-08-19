@@ -1,4 +1,5 @@
 import torch
+import argparse
 from torchvision import datasets, transforms
 from torch.utils.data import DataLoader
 from quanv_layer import quanv_layer
@@ -35,19 +36,44 @@ def main():
     if not os.path.exists("./data"):
         os.makedirs("./data")
 
+    parser = argparse.ArgumentParser(
+        description="Preprocess a Dataset using a random quantum circuit"
+    )
+    parser.add_argument(
+        "--dataset",
+        type=str,
+        choices=["mnist", "fmnist", "kmnist"],
+        default="mnist",
+        help="Dataset to preprocess",
+    )
+    args = parser.parse_args()
+
     # Standard MNIST transformations
     transform = transforms.Compose([transforms.ToTensor()])
-
-    # Load original MNIST datasets
-    train_dataset = datasets.MNIST(
-        root="./data", train=True, download=True, transform=transform
-    )
-    test_dataset = datasets.MNIST(
-        root="./data", train=False, download=True, transform=transform
-    )
-
-    filename_train = "./data/processed_train_2l.pt"
-    filename_test = "./data/processed_test_2l.pt"
+    dataset = args.dataset
+    if dataset == "mnist":
+        train_dataset = datasets.MNIST(
+            root="./data", train=True, download=True, transform=transform
+        )
+        test_dataset = datasets.MNIST(
+            root="./data", train=False, download=True, transform=transform
+        )
+    elif dataset == "fmnist":
+        train_dataset = datasets.FashionMNIST(
+            root="./data", train=True, download=True, transform=transform
+        )
+        test_dataset = datasets.FashionMNIST(
+            root="./data", train=False, download=True, transform=transform
+        )
+    elif dataset == "kmnist":
+        train_dataset = datasets.KMNIST(
+            root="./data", train=True, download=True, transform=transform
+        )
+        test_dataset = datasets.KMNIST(
+            root="./data", train=False, download=True, transform=transform
+        )
+    filename_train = "./data/processed_train" + dataset + ".pt"
+    filename_test = "./data/processed_test" + dataset + ".pt"
 
     # Process and save both training and testing data
     preprocess_and_save(train_dataset, filename_train)

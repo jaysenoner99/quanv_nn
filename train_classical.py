@@ -1,31 +1,24 @@
-# train.py
+# train_classical.py
+
 import torch
 import torch.optim as optim
 import torch.nn as nn
-from torch.utils.data import DataLoader, Dataset, random_split
-from model import QNN
+from torch.utils.data import DataLoader, random_split
+from torchvision import (
+    datasets,
+    transforms,
+)  # --- CHANGE: Import torchvision datasets ---
+from cnn_model import ClassicalCNN  # --- CHANGE: Import the classical model ---
 from tqdm import tqdm
-import argparse  # For command-line arguments
-import wandb  # For logging
-
-
-# --- Custom Dataset (remains the same) ---
-class QuantumProcessedDataset(Dataset):
-    def __init__(self, filepath):
-        self.data = torch.load(filepath)
-
-    def __len__(self):
-        return len(self.data)
-
-    def __getitem__(self, idx):
-        return self.data[idx]
+import argparse
+import wandb
 
 
 # --- Main Execution ---
 def main():
-    # --- 1. Command-Line Argument Parsing ---
+    # --- 1. Command-Line Argument Parsing (No data path args needed) ---
     parser = argparse.ArgumentParser(
-        description="Train a classical model on quantum pre-processed data."
+        description="Train a Classical CNN on original MNIST data for baseline comparison."
     )
     parser.add_argument(
         "--epochs", type=int, default=20, help="Number of training epochs."
@@ -39,70 +32,62 @@ def main():
     parser.add_argument(
         "--lr", type=float, default=0.001, help="Learning rate for the optimizer."
     )
-    parser.add_argument(
-        "--path-train",
-        type=str,
-        default="./data/processed_train.pt",
-        help="Path to quantum processed training data",
-    )
-    parser.add_argument(
-        "--path-test",
-        type=str,
-        default="./data/processed_test.pt",
-        help="Path to quantum processed test data",
-    )
     args = parser.parse_args()
 
     # --- 2. Initialize Weights & Biases ---
     wandb.init(
         project="quanvolutional-nn-mnist",
+        job_type="classical-baseline",  # Add a job_type for easy filtering in W&B
         config={
             "learning_rate": args.lr,
-            "architecture": "Quanv-CNN",
+            "architecture": "Classical-CNN-Baseline",  # --- CHANGE: Note the architecture ---
+            "dataset": "MNIST-Original",
             "epochs": args.epochs,
             "batch_size": args.batch_size,
-            "path_train": args.path_train,
         },
     )
-    # For easy access to hyperparameters
     config = wandb.config
-    train_data = args.path_train
-    test_data = args.path_test
-    # --- 3. Data Loading and Splitting ---
-    torch.manual_seed(42)  # Ensure reproducibility for the split
 
-    # Load the full pre-processed training data
-    full_train_dataset = QuantumProcessedDataset(train_data)
+    # --- 3. Data Loading and Splitting (Using original MNIST) ---
+    torch.manual_seed(42)
 
-    # Split the training data into training and validation sets (e.g., 80/20 split)
+    # Define the transformation - just scale to [0, 1] tensor
+    transform = transforms.Compose([transforms.ToTensor()])
+
+    # Load the full original training data from torchvision
+    full_train_dataset = datasets.MNIST(
+        root="./data", train=True, download=True, transform=transform
+    )
+
+    # Split the training data into training and validation sets (80/20 split)
     train_size = int(0.8 * len(full_train_dataset))
     val_size = len(full_train_dataset) - train_size
     train_dataset, val_dataset = random_split(
         full_train_dataset, [train_size, val_size]
     )
 
-    # Load the pre-processed test data
-    test_dataset = QuantumProcessedDataset(test_data)
-    
-    print(
-        f"Loading quantum processed data: {train_data}, {test_data}"
+    # Load the original test data from torchvision
+    test_dataset = datasets.MNIST(
+        root="./data", train=False, download=True, transform=transform
     )
+
+    print("Loading original MNIST data from torchvision.")
     # Create DataLoaders for all three sets
     train_loader = DataLoader(train_dataset, batch_size=config.batch_size, shuffle=True)
     val_loader = DataLoader(val_dataset, batch_size=config.batch_size, shuffle=False)
     test_loader = DataLoader(test_dataset, batch_size=config.batch_size, shuffle=False)
-    
+
     print(
         f"Data loaded: {len(train_dataset)} train, {len(val_dataset)} validation, {len(test_dataset)} test samples."
     )
 
     # --- 4. Model, Optimizer, and Loss Function ---
     device = "cuda" if torch.cuda.is_available() else "cpu"
-    model = QNN().to(device)
+    model = ClassicalCNN().to(device)  # --- CHANGE: Instantiate the ClassicalCNN ---
     optimizer = optim.Adam(model.parameters(), lr=config.learning_rate)
     criterion = nn.CrossEntropyLoss()
 
-    # --- 5. Training and Validation Loop ---
+    # --- 5. Training and Validation Loop (Identical Logic) ---
     print("Starting training...")
     for epoch in range(config.epochs):
         # --- Training Phase ---
@@ -151,7 +136,7 @@ def main():
             f"Epoch {epoch + 1}/{config.epochs} -> Train Loss: {avg_train_loss:.4f}, Val Loss: {avg_val_loss:.4f}, Val Acc: {val_accuracy:.2f}%"
         )
 
-        # --- 6. Logging to W&B ---
+        # --- 6. Logging to W&B (Identical Logic) ---
         wandb.log(
             {
                 "epoch": epoch + 1,
@@ -163,7 +148,7 @@ def main():
 
     print("\nFinished Training.")
 
-    # --- 7. Final Test Routine ---
+    # --- 7. Final Test Routine (Identical Logic) ---
     print("Running final test on the test set...")
     model.eval()
     test_loss = 0.0
@@ -192,8 +177,8 @@ def main():
     wandb.summary["test_accuracy"] = final_test_accuracy
     wandb.log(
         {
-            "test_loss" : final_test_loss,
-            "test_acc" : final_test_accuracy,
+            "test_loss": final_test_loss,
+            "test_acc": final_test_accuracy,
         }
     )
     wandb.finish()

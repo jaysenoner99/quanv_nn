@@ -7,7 +7,7 @@ import torch
 
 # Define the number of qubits and layers
 n_qubits = 4
-n_layers = 2  # As in the tutorial
+n_layers = 1  # As in the tutorial
 
 # Use the high-performance lightning simulator
 dev = qml.device("lightning.qubit", wires=n_qubits)
