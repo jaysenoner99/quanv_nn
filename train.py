@@ -42,14 +42,14 @@ def main():
     parser.add_argument(
         "--path-train",
         type=str,
-        default="./data/processed_train.pt",
-        help="Path to quantum processed training data",
+        default="processed_train_mnist.pt",
+        help="Path to quantum processed training data in the ./data/ directory",
     )
     parser.add_argument(
         "--path-test",
         type=str,
-        default="./data/processed_test.pt",
-        help="Path to quantum processed test data",
+        default="processed_test_mnist.pt",
+        help="Path to quantum processed test data in the ./data/ directory",
     )
     args = parser.parse_args()
 
@@ -66,8 +66,8 @@ def main():
     )
     # For easy access to hyperparameters
     config = wandb.config
-    train_data = args.path_train
-    test_data = args.path_test
+    train_data = "./data/" + args.path_train
+    test_data = "./data/" + args.path_test
     # --- 3. Data Loading and Splitting ---
     torch.manual_seed(42)  # Ensure reproducibility for the split
 
@@ -83,15 +83,13 @@ def main():
 
     # Load the pre-processed test data
     test_dataset = QuantumProcessedDataset(test_data)
-    
-    print(
-        f"Loading quantum processed data: {train_data}, {test_data}"
-    )
+
+    print(f"Loading quantum processed data: {train_data}, {test_data}")
     # Create DataLoaders for all three sets
     train_loader = DataLoader(train_dataset, batch_size=config.batch_size, shuffle=True)
     val_loader = DataLoader(val_dataset, batch_size=config.batch_size, shuffle=False)
     test_loader = DataLoader(test_dataset, batch_size=config.batch_size, shuffle=False)
-    
+
     print(
         f"Data loaded: {len(train_dataset)} train, {len(val_dataset)} validation, {len(test_dataset)} test samples."
     )
@@ -192,8 +190,8 @@ def main():
     wandb.summary["test_accuracy"] = final_test_accuracy
     wandb.log(
         {
-            "test_loss" : final_test_loss,
-            "test_acc" : final_test_accuracy,
+            "test_loss": final_test_loss,
+            "test_acc": final_test_accuracy,
         }
     )
     wandb.finish()

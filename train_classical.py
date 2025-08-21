@@ -14,7 +14,33 @@ import argparse
 import wandb
 
 
-# --- Main Execution ---
+def prepare_dataset(args):
+    dataset = args.dataset
+    transform = transforms.Compose([transforms.ToTensor()])
+    if dataset == "mnist":
+        train_dataset = datasets.MNIST(
+            root="./data", train=True, download=True, transform=transform
+        )
+        test_dataset = datasets.MNIST(
+            root="./data", train=False, download=True, transform=transform
+        )
+    elif dataset == "fmnist":
+        train_dataset = datasets.FashionMNIST(
+            root="./data", train=True, download=True, transform=transform
+        )
+        test_dataset = datasets.FashionMNIST(
+            root="./data", train=False, download=True, transform=transform
+        )
+    elif dataset == "kmnist":
+        train_dataset = datasets.KMNIST(
+            root="./data", train=True, download=True, transform=transform
+        )
+        test_dataset = datasets.KMNIST(
+            root="./data", train=False, download=True, transform=transform
+        )
+    return train_dataset, test_dataset
+
+
 def main():
     # --- 1. Command-Line Argument Parsing (No data path args needed) ---
     parser = argparse.ArgumentParser(
@@ -32,8 +58,15 @@ def main():
     parser.add_argument(
         "--lr", type=float, default=0.001, help="Learning rate for the optimizer."
     )
+    parser.add_argument(
+        "--dataset",
+        type=str,
+        choices=["mnist", "fmnist", "kmnist"],
+        default="mnist",
+        help="Dataset to preprocess",
+    )
     args = parser.parse_args()
-
+    full_train_dataset, test_dataset = prepare_dataset(args)
     # --- 2. Initialize Weights & Biases ---
     wandb.init(
         project="quanvolutional-nn-mnist",
@@ -41,38 +74,22 @@ def main():
         config={
             "learning_rate": args.lr,
             "architecture": "Classical-CNN-Baseline",  # --- CHANGE: Note the architecture ---
-            "dataset": "MNIST-Original",
+            "dataset": args.dataset,
             "epochs": args.epochs,
             "batch_size": args.batch_size,
         },
     )
     config = wandb.config
 
-    # --- 3. Data Loading and Splitting (Using original MNIST) ---
     torch.manual_seed(42)
 
-    # Define the transformation - just scale to [0, 1] tensor
-    transform = transforms.Compose([transforms.ToTensor()])
-
-    # Load the full original training data from torchvision
-    full_train_dataset = datasets.MNIST(
-        root="./data", train=True, download=True, transform=transform
-    )
-
-    # Split the training data into training and validation sets (80/20 split)
     train_size = int(0.8 * len(full_train_dataset))
     val_size = len(full_train_dataset) - train_size
     train_dataset, val_dataset = random_split(
         full_train_dataset, [train_size, val_size]
     )
 
-    # Load the original test data from torchvision
-    test_dataset = datasets.MNIST(
-        root="./data", train=False, download=True, transform=transform
-    )
-
-    print("Loading original MNIST data from torchvision.")
-    # Create DataLoaders for all three sets
+    print("Creating Dataloaders...")
     train_loader = DataLoader(train_dataset, batch_size=config.batch_size, shuffle=True)
     val_loader = DataLoader(val_dataset, batch_size=config.batch_size, shuffle=False)
     test_loader = DataLoader(test_dataset, batch_size=config.batch_size, shuffle=False)

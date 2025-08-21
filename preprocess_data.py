@@ -72,8 +72,8 @@ def main():
         test_dataset = datasets.KMNIST(
             root="./data", train=False, download=True, transform=transform
         )
-    filename_train = "./data/processed_train" + dataset + ".pt"
-    filename_test = "./data/processed_test" + dataset + ".pt"
+    filename_train = "./data/processed_train_" + dataset + ".pt"
+    filename_test = "./data/processed_test_" + dataset + ".pt"
 
     # Process and save both training and testing data
     preprocess_and_save(train_dataset, filename_train)
