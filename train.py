@@ -1,4 +1,5 @@
 # train.py
+import os
 import torch
 import torch.optim as optim
 import torch.nn as nn
@@ -35,6 +36,12 @@ def main():
         type=int,
         default=128,
         help="Batch size for training, validation, and testing.",
+    )
+    parser.add_argument(
+        "--save",
+        type=bool,
+        default=False,
+        help="Whether to save a model checkpoint after training",
     )
     parser.add_argument(
         "--lr", type=float, default=0.001, help="Learning rate for the optimizer."
@@ -158,8 +165,12 @@ def main():
                 "validation_accuracy": val_accuracy,
             }
         )
-
-    print("\nFinished Training.")
+    if args.save:
+        print("\nFinished Training.")
+        os.makedirs("./saved_models", exist_ok=True)
+        model_path = f"./saved_models/kmnist_qnn.pt"
+        torch.save(model.state_dict(), model_path)
+        print(f"Model saved to {model_path}")
 
     # --- 7. Final Test Routine ---
     print("Running final test on the test set...")

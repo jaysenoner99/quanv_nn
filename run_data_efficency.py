@@ -5,15 +5,15 @@ from torch.utils.data import DataLoader, random_split, Subset
 from torchvision import datasets, transforms
 import argparse
 import wandb
+import matplotlib.pyplot as plt
 
 # Import your models and the new trainer function
 from model import QNN
 from cnn_model import ClassicalCNN
 from trainer import train_and_evaluate
-import matplotlib.pyplot as plt
 
 
-# --- Custom Dataset for Quantum Data (copied from your train.py) ---
+# --- Custom Dataset for Quantum Data ---
 class QuantumProcessedDataset(torch.utils.data.Dataset):
     def __init__(self, filepath):
         self.data = torch.load(filepath)
@@ -53,7 +53,7 @@ def main():
     )
     args = parser.parse_args()
 
-    # --- 2. Initialize a single W&B run for the whole experiment ---
+    # --- 2. Initialize a single W&B run ---
     wandb.init(
         project="quanvolutional-nn-mnist",
         job_type="data-efficiency-experiment",
@@ -61,7 +61,6 @@ def main():
     )
     config = wandb.config
 
-    # Create a custom table to log results for a final plot
     results_table = wandb.Table(
         columns=["Model Type", "Data Percentage", "Test Accuracy"]
     )
@@ -94,43 +93,59 @@ def main():
             root="./data", train=False, download=True, transform=transform
         )
 
-    # Load Quantum Data (assuming it's pre-processed and named systematically)
-    # Example path: ./data/fmnist_1_layer_processed_train.pt
-    # NOTE: You will need to adjust these paths based on your actual pre-processed file names.
-    q_train_path = f"./data/processed_train_{config.dataset}.pt"
-    q_test_path = f"./data/processed_test_{config.dataset}.pt"
-    full_train_qnn = QuantumProcessedDataset(q_train_path)
-    test_qnn = QuantumProcessedDataset(q_test_path)
+    # Load Quantum Data (1-Layer)
+    q_train_path_1l = f"./data/processed_train_{config.dataset}.pt"
+    q_test_path_1l = f"./data/processed_test_{config.dataset}.pt"
+    full_train_qnn_1l = QuantumProcessedDataset(q_train_path_1l)
+    test_qnn_1l = QuantumProcessedDataset(q_test_path_1l)
 
+    # --- NEW: Load Quantum Data (2-Layer) ---
+    q_train_path_2l = f"./data/processed_train_{config.dataset}_2l.pt"
+    q_test_path_2l = f"./data/processed_test_{config.dataset}_2l.pt"
+    full_train_qnn_2l = QuantumProcessedDataset(q_train_path_2l)
+    test_qnn_2l = QuantumProcessedDataset(q_test_path_2l)
+
+    # Create test loaders
     test_loader_classical = DataLoader(test_classical, batch_size=config.batch_size)
-    test_loader_qnn = DataLoader(test_qnn, batch_size=config.batch_size)
+    test_loader_qnn_1l = DataLoader(test_qnn_1l, batch_size=config.batch_size)
+    test_loader_qnn_2l = DataLoader(
+        test_qnn_2l, batch_size=config.batch_size
+    )  # --- NEW
 
-    qnn_accuracies = []
+    # Lists to store results for plotting
+    qnn_1l_accuracies = []
+    qnn_2l_accuracies = []  # --- NEW
     classical_accuracies = []
 
     # --- 4. Main Experiment Loop ---
     for p in config.percentages:
         print(f"\n===== TRAINING ON {p}% OF THE DATA =====\n")
 
-        # --- Subset the data ---
         num_train_samples = int((p / 100) * len(full_train_classical))
-        # Use random_split to get a random subset and a small validation set
+
+        # Create subsets for all three data types
         subset_train_classical, _ = random_split(
             full_train_classical,
             [num_train_samples, len(full_train_classical) - num_train_samples],
         )
-        subset_train_qnn, _ = random_split(
-            full_train_qnn, [num_train_samples, len(full_train_qnn) - num_train_samples]
+        subset_train_qnn_1l, _ = random_split(
+            full_train_qnn_1l,
+            [num_train_samples, len(full_train_qnn_1l) - num_train_samples],
+        )
+        subset_train_qnn_2l, _ = random_split(  # --- NEW
+            full_train_qnn_2l,
+            [num_train_samples, len(full_train_qnn_2l) - num_train_samples],
         )
 
-        # Create DataLoaders for the subsets. A small validation set is still useful.
-        # For simplicity, we create a dummy val_loader if the subset is too small.
-        # A more robust way is to ensure val_set has at least 1 sample.
+        # Create DataLoaders for the subsets
         train_loader_classical = DataLoader(
             subset_train_classical, batch_size=config.batch_size, shuffle=True
         )
-        train_loader_qnn = DataLoader(
-            subset_train_qnn, batch_size=config.batch_size, shuffle=True
+        train_loader_qnn_1l = DataLoader(
+            subset_train_qnn_1l, batch_size=config.batch_size, shuffle=True
+        )
+        train_loader_qnn_2l = DataLoader(  # --- NEW
+            subset_train_qnn_2l, batch_size=config.batch_size, shuffle=True
         )
 
         # --- Train and Evaluate Classical Model ---
@@ -145,27 +160,54 @@ def main():
         )
         wandb.log({"classical_accuracy": classical_acc, "data_percentage": p})
         results_table.add_data("Classical", p, classical_acc)
-        classical_accuracies.append(classical_acc)  # --- NEW: Store result
+        classical_accuracies.append(classical_acc)
 
-        # --- Train and Evaluate QNN Model ---
-        print(f"--- Training QNN on {num_train_samples} samples ---")
-        qnn_model = QNN()
-        qnn_acc = train_and_evaluate(
-            model=qnn_model,
-            train_loader=train_loader_qnn,
-            test_loader=test_loader_qnn,
+        # --- Train and Evaluate QNN Model (1-Layer) ---
+        print(f"--- Training QNN (1-Layer) on {num_train_samples} samples ---")
+        qnn_model_1l = QNN()
+        qnn_1l_acc = train_and_evaluate(
+            model=qnn_model_1l,
+            train_loader=train_loader_qnn_1l,
+            test_loader=test_loader_qnn_1l,
             config=config,
             device=device,
         )
-        wandb.log({"qnn_accuracy": qnn_acc, "data_percentage": p})
-        results_table.add_data("QNN", p, qnn_acc)
-        qnn_accuracies.append(qnn_acc)
+        wandb.log({"qnn_1_layer_accuracy": qnn_1l_acc, "data_percentage": p})
+        results_table.add_data("QNN (1 Layer)", p, qnn_1l_acc)
+        qnn_1l_accuracies.append(qnn_1l_acc)
+
+        # --- NEW: Train and Evaluate QNN Model (2-Layer) ---
+        print(f"--- Training QNN (2-Layer) on {num_train_samples} samples ---")
+        qnn_model_2l = QNN()  # The model architecture is the same
+        qnn_2l_acc = train_and_evaluate(
+            model=qnn_model_2l,
+            train_loader=train_loader_qnn_2l,
+            test_loader=test_loader_qnn_2l,
+            config=config,
+            device=device,
+        )
+        wandb.log({"qnn_2_layer_accuracy": qnn_2l_acc, "data_percentage": p})
+        results_table.add_data("QNN (2 Layers)", p, qnn_2l_acc)
+        qnn_2l_accuracies.append(qnn_2l_acc)
 
     # --- 5. Create, Save, and Log the Final Plot ---
     print("\n--- Generating and logging final plot ---")
     fig, ax = plt.subplots(figsize=(10, 6))
 
-    ax.plot(config.percentages, qnn_accuracies, "o-", label="Quanv-CNN", color="blue")
+    ax.plot(
+        config.percentages,
+        qnn_1l_accuracies,
+        "o-",
+        label="Quanv-CNN (1 Layer)",
+        color="blue",
+    )
+    ax.plot(
+        config.percentages,
+        qnn_2l_accuracies,
+        "^-",
+        label="Quanv-CNN (2 Layers)",
+        color="red",
+    )  # --- NEW
     ax.plot(
         config.percentages,
         classical_accuracies,
@@ -179,12 +221,14 @@ def main():
     ax.set_xlabel("Percentage of Training Data Used (%)")
     ax.set_ylabel("Final Test Accuracy (%)")
     ax.set_xticks(config.percentages)
-    ax.set_ylim(bottom=min(min(qnn_accuracies), min(classical_accuracies)) - 5, top=100)
+    # --- NEW: Update ylim to include all three models ---
+    all_accuracies = qnn_1l_accuracies + qnn_2l_accuracies + classical_accuracies
+    ax.set_ylim(bottom=min(all_accuracies) - 5, top=100)
     ax.legend()
     ax.grid(True, which="both", linestyle="--", linewidth=0.5)
 
     # Save the plot locally
-    plt.savefig(f"data_efficiency_{config.dataset}.png")
+    plt.savefig(f"data_efficiency_{config.dataset}_with_2l.png")
 
     # Log the plot and the results table to W&B
     wandb.log(
@@ -194,7 +238,7 @@ def main():
         }
     )
 
-    plt.close(fig)  # Close the plot to free memory
+    plt.close(fig)
 
     print("\n===== EXPERIMENT COMPLETE =====\n")
     wandb.finish()

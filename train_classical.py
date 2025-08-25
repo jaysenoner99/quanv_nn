@@ -1,5 +1,5 @@
 # train_classical.py
-
+import os
 import torch
 import torch.optim as optim
 import torch.nn as nn
@@ -164,7 +164,10 @@ def main():
         )
 
     print("\nFinished Training.")
-
+    os.makedirs("./saved_models", exist_ok=True)
+    model_path = f"./saved_models/{config.dataset}_cnn.pt"
+    torch.save(model.state_dict(), model_path)
+    print(f"Model saved to {model_path}")
     # --- 7. Final Test Routine (Identical Logic) ---
     print("Running final test on the test set...")
     model.eval()
