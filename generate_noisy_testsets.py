@@ -17,16 +17,31 @@ def add_gaussian_noise(image, std):
 
 
 def add_salt_pepper_noise(image, amount):
+    """
+    Adds salt and pepper noise to a grayscale tensor image of shape (1, H, W).
+    Image values are assumed in [0,1].
+    """
+    if amount == 0.0:
+        return image
+
     s_vs_p = 0.5
     noisy_image = image.clone()
-    # Salt mode
-    num_salt = int(amount * image.numel() * s_vs_p)
-    coords = [torch.randint(0, i - 1, (num_salt,)) for i in image.shape]
-    noisy_image[coords] = 1
-    # Pepper mode
-    num_pepper = int(amount * image.numel() * (1.0 - s_vs_p))
-    coords = [torch.randint(0, i - 1, (num_pepper,)) for i in image.shape]
-    noisy_image[coords] = 0
+    _, H, W = noisy_image.shape
+
+    # Number of pixels to alter
+    num_salt = int(amount * H * W * s_vs_p)
+    num_pepper = int(amount * H * W * (1.0 - s_vs_p))
+
+    # Salt noise
+    coords_h = torch.randint(0, H, (num_salt,))
+    coords_w = torch.randint(0, W, (num_salt,))
+    noisy_image[0, coords_h, coords_w] = 1.0
+
+    # Pepper noise
+    coords_h = torch.randint(0, H, (num_pepper,))
+    coords_w = torch.randint(0, W, (num_pepper,))
+    noisy_image[0, coords_h, coords_w] = 0.0
+
     return noisy_image
 
 

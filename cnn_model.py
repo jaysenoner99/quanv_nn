@@ -37,3 +37,20 @@ class ClassicalCNN(nn.Module):
         x = self.fc2(x)
 
         return x
+
+    def extract_features(self, x):
+        # Classical Conv2d layer that outputs tensor with the same dimensions as the quanv layer with 4 qubits
+        x = self.feature_extractor(x)
+
+        # Pass through the same convolution layers as the QNN architecture
+        x = torch.relu(self.conv1(x))
+        x = self.pool1(x)
+
+        x = torch.relu(self.conv2(x))
+        x = self.pool2(x)
+
+        x = x.reshape(x.size(0), -1)  # Flatten
+
+        x = torch.relu(self.fc1(x))
+        x = self.dropout(x)
+        return x

@@ -37,3 +37,19 @@ class QNN(nn.Module):
         x = self.fc2(x)
 
         return x
+
+    def extract_features(self, x):
+        x = x.permute(0, 3, 1, 2)
+
+        # Pass through the classical layers as before
+        x = torch.relu(self.conv1(x))
+        x = self.pool1(x)
+
+        x = torch.relu(self.conv2(x))
+        x = self.pool2(x)
+
+        x = x.reshape(x.size(0), -1)  # Flatten
+
+        x = torch.relu(self.fc1(x))
+        x = self.dropout(x)
+        return x
