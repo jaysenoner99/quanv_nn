@@ -53,7 +53,10 @@ def main():
         description="Run t-SNE feature space visualization."
     )
     parser.add_argument(
-        "--dataset", type=str, choices=["mnist", "fmnist", "kmnist"], required=True
+        "--dataset",
+        type=str,
+        choices=["mnist", "fmnist", "kmnist", "cifar10"],
+        required=True,
     )
     parser.add_argument(
         "--batch_size", type=int, default=256, help="Batch size for feature extraction."
@@ -98,6 +101,18 @@ def main():
     elif config.dataset == "kmnist":
         classical_test_set = datasets.KMNIST(
             root="./data", train=False, download=True, transform=transform
+        )
+    elif config.dataset == "cifar10":
+        cifar_transform = transforms.Compose(
+            [
+                transforms.Grayscale(num_output_channels=1),  # RGB → grayscale
+                transforms.Resize(28),  # resize shortest side to 28
+                transforms.CenterCrop(28),  # crop to exactly 28x28
+                transforms.ToTensor(),
+            ]
+        )
+        classical_test_set = datasets.CIFAR10(
+            root="./data", train=False, download=True, transform=cifar_transform
         )
 
     # Quantum-Processed Test Set

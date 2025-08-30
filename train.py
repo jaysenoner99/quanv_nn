@@ -39,7 +39,7 @@ def main():
     )
     parser.add_argument(
         "--save",
-        type=bool,
+        action="store_true",
         default=False,
         help="Whether to save a model checkpoint after training",
     )
@@ -168,7 +168,7 @@ def main():
     if args.save:
         print("\nFinished Training.")
         os.makedirs("./saved_models", exist_ok=True)
-        model_path = f"./saved_models/kmnist_qnn.pt"
+        model_path = f"./saved_models/cifar10_qnn.pt"
         torch.save(model.state_dict(), model_path)
         print(f"Model saved to {model_path}")
 

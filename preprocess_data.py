@@ -42,7 +42,7 @@ def main():
     parser.add_argument(
         "--dataset",
         type=str,
-        choices=["mnist", "fmnist", "kmnist"],
+        choices=["mnist", "fmnist", "kmnist", "cifar10"],
         default="mnist",
         help="Dataset to preprocess",
     )
@@ -72,8 +72,24 @@ def main():
         test_dataset = datasets.KMNIST(
             root="./data", train=False, download=True, transform=transform
         )
-    filename_train = "./data/processed_train_" + dataset + "_2l.pt"
-    filename_test = "./data/processed_test_" + dataset + "_2l.pt"
+    elif dataset == "cifar10":
+        cifar_transform = transforms.Compose(
+            [
+                transforms.Grayscale(num_output_channels=1),  # RGB → grayscale
+                transforms.Resize(28),  # resize shortest side to 28
+                transforms.CenterCrop(28),  # crop to exactly 28x28
+                transforms.ToTensor(),
+            ]
+        )
+
+        train_dataset = datasets.CIFAR10(
+            root="./data", train=True, download=True, transform=cifar_transform
+        )
+        test_dataset = datasets.CIFAR10(
+            root="./data", train=False, download=True, transform=cifar_transform
+        )
+    filename_train = "./data/processed_train_" + dataset + ".pt"
+    filename_test = "./data/processed_test_" + dataset + ".pt"
 
     # Process and save both training and testing data
     preprocess_and_save(train_dataset, filename_train)

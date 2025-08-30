@@ -50,7 +50,10 @@ def main():
         description="Generate noisy classical and quantum-processed test sets."
     )
     parser.add_argument(
-        "--dataset", type=str, choices=["mnist", "fmnist", "kmnist"], required=True
+        "--dataset",
+        type=str,
+        choices=["mnist", "fmnist", "kmnist", "cifar10"],
+        required=True,
     )
     parser.add_argument(
         "--noise_type", type=str, choices=["gaussian", "salt_pepper"], required=True
@@ -86,11 +89,22 @@ def main():
         clean_test_set = datasets.FashionMNIST(
             root="./data", train=False, download=True, transform=transform
         )
-    else:  # kmnist
+    elif args.dataset == "kmnist":  # kmnist
         clean_test_set = datasets.KMNIST(
             root="./data", train=False, download=True, transform=transform
         )
-
+    elif args.dataset == "cifar10":
+        cifar_transform = transforms.Compose(
+            [
+                transforms.Grayscale(num_output_channels=1),  # RGB → grayscale
+                transforms.Resize(28),  # resize shortest side to 28
+                transforms.CenterCrop(28),  # crop to exactly 28x28
+                transforms.ToTensor(),
+            ]
+        )
+        clean_test_set = datasets.CIFAR10(
+            root="./data", train=False, download=True, transform=cifar_transform
+        )
     # --- 2. Generate the classical noisy dataset ---
     print(
         f"Generating CLASSICAL noisy dataset with {args.noise_type} noise at level {args.noise_level}..."
