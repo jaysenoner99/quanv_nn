@@ -3,7 +3,6 @@
 import pennylane as qml
 from pennylane import numpy as np
 from pennylane.templates import RandomLayers
-import torch
 
 # Define the number of qubits and layers
 n_qubits = 4
@@ -28,7 +27,7 @@ def quanv_circuit(phi):
     for j in range(n_qubits):
         qml.RY(np.pi * phi[j], wires=j)
 
-    # --- FIX: Use RandomLayers template with the pre-generated parameters ---
+    # --- FIXED: Use RandomLayers template with the pre-generated parameters ---
     RandomLayers(rand_params, wires=list(range(n_qubits)))
 
     # Measurement producing 4 classical output values

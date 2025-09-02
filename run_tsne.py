@@ -129,7 +129,7 @@ def main():
     classical_features, classical_labels = get_features(
         classical_model, classical_loader, device
     )
-    qnn_features, qnn_labels = get_features(qnn_model, qnn_loader, device)
+    qnn_features, _ = get_features(qnn_model, qnn_loader, device)
 
     # --- 4. Subsample and Run t-SNE ---
     # Using a subset of data because t-SNE is computationally expensive
@@ -180,7 +180,7 @@ def main():
     plt.tight_layout(rect=[0, 0.03, 1, 0.95])
 
     # --- 6. Log to W&B ---
-    plt.savefig(f"tsne_visualization_{config.dataset}.png")
+    plt.savefig(f"./images/tsne_visualization_{config.dataset}.png")
     wandb.log({"tsne_feature_space_plot": wandb.Image(fig)})
     plt.close(fig)
 

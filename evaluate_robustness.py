@@ -36,7 +36,10 @@ def main():
     )
     parser.add_argument("--batch_size", type=int, default=128)
     parser.add_argument(
-        "--dataset", type=str, choices=["mnist", "fmnist", "kmnist"], required=True
+        "--dataset",
+        type=str,
+        choices=["mnist", "fmnist", "kmnist", "cifar10"],
+        required=True,
     )
     parser.add_argument(
         "--gaussian_stds", nargs="+", type=float, default=[0.1, 0.2, 0.3, 0.4, 0.5]
@@ -60,7 +63,7 @@ def main():
 
     # --- 3. Load Pre-trained Models ---
     model_dir = "./saved_models"
-    classical_model_path = os.path.join(model_dir, f"{config.dataset}_classical.pt")
+    classical_model_path = os.path.join(model_dir, f"{config.dataset}_cnn.pt")
     qnn_model_path = os.path.join(model_dir, f"{config.dataset}_qnn.pt")
 
     print("Loading pre-trained models...")
@@ -151,7 +154,7 @@ def main():
     ax_gaussian.legend()
     ax_gaussian.grid(True)
     plt.tight_layout()
-    plt.savefig(f"gaussian_robustness_{config.dataset}.png")
+    plt.savefig(f"./images/gaussian_robustness_{config.dataset}.png")
 
     # Log the Gaussian plot to W&B
     wandb.log({"gaussian_robustness_plot": wandb.Image(fig_gaussian)})
@@ -178,7 +181,7 @@ def main():
     ax_sp.legend()
     ax_sp.grid(True)
     plt.tight_layout()
-    plt.savefig(f"salt_pepper_robustness_{config.dataset}.png")
+    plt.savefig(f"./images/salt_pepper_robustness_{config.dataset}.png")
 
     # Log the Salt & Pepper plot to W&B
     wandb.log({"salt_pepper_robustness_plot": wandb.Image(fig_sp)})

@@ -57,6 +57,10 @@ def prepare_dataset(args):
     return train_dataset, test_dataset
 
 
+def count_parameters(model):
+    return sum(p.numel() for p in model.parameters() if p.requires_grad)
+
+
 def main():
     # --- 1. Command-Line Argument Parsing (No data path args needed) ---
     parser = argparse.ArgumentParser(
@@ -117,6 +121,10 @@ def main():
     # --- 4. Model, Optimizer, and Loss Function ---
     device = "cuda" if torch.cuda.is_available() else "cpu"
     model = ClassicalCNN().to(device)  # --- CHANGE: Instantiate the ClassicalCNN ---
+
+    cnn_params = count_parameters(model)
+    print(f"CNN has {cnn_params:,} trainable parameters.")
+    wandb.summary["parameters"] = cnn_params
     optimizer = optim.Adam(model.parameters(), lr=config.learning_rate)
     criterion = nn.CrossEntropyLoss()
 

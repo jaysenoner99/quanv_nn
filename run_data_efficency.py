@@ -1,7 +1,7 @@
 # run_data_efficiency.py
 
 import torch
-from torch.utils.data import DataLoader, random_split, Subset
+from torch.utils.data import DataLoader, random_split
 from torchvision import datasets, transforms
 import argparse
 import wandb
@@ -85,14 +85,29 @@ def main():
         test_classical = datasets.FashionMNIST(
             root="./data", train=False, download=True, transform=transform
         )
-    else:  # kmnist
+    elif config.dataset == "kmnist":  # kmnist
         full_train_classical = datasets.KMNIST(
             root="./data", train=True, download=True, transform=transform
         )
         test_classical = datasets.KMNIST(
             root="./data", train=False, download=True, transform=transform
         )
+    elif config.dataset == "cifar10":
+        cifar_transform = transforms.Compose(
+            [
+                transforms.Grayscale(num_output_channels=1),  # RGB → grayscale
+                transforms.Resize(28),  # resize shortest side to 28
+                transforms.CenterCrop(28),  # crop to exactly 28x28
+                transforms.ToTensor(),
+            ]
+        )
 
+        full_train_classical = datasets.CIFAR10(
+            root="./data", train=True, download=True, transform=cifar_transform
+        )
+        test_classical = datasets.CIFAR10(
+            root="./data", train=False, download=True, transform=cifar_transform
+        )
     # Load Quantum Data (1-Layer)
     q_train_path_1l = f"./data/processed_train_{config.dataset}.pt"
     q_test_path_1l = f"./data/processed_test_{config.dataset}.pt"
@@ -228,7 +243,7 @@ def main():
     ax.grid(True, which="both", linestyle="--", linewidth=0.5)
 
     # Save the plot locally
-    plt.savefig(f"data_efficiency_{config.dataset}_with_2l.png")
+    plt.savefig(f"./images/data_efficiency_{config.dataset}_with_2l.png")
 
     # Log the plot and the results table to W&B
     wandb.log(

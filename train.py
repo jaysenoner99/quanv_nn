@@ -9,6 +9,12 @@ from tqdm import tqdm
 import argparse  # For command-line arguments
 import wandb  # For logging
 
+# TODO : Fare prerpocessing a 2 layer di cifar10 e trainare la qnn salvando il checkpoint.
+# Trainare le QNN a 2layer per gli altri dataset e salvare i checkpoint
+# Rifare la data efficiency per bene con tutti i dataset e le reti
+# Aggiungere esperimenti: minimalCNN, parameter count,confusion matrix
+# Fare relazione e presentazione D:
+
 
 # --- Custom Dataset (remains the same) ---
 class QuantumProcessedDataset(Dataset):
@@ -21,6 +27,8 @@ class QuantumProcessedDataset(Dataset):
     def __getitem__(self, idx):
         return self.data[idx]
 
+def count_parameters(model):
+    return sum(p.numel() for p in model.parameters() if p.requires_grad)
 
 # --- Main Execution ---
 def main():
@@ -38,10 +46,10 @@ def main():
         help="Batch size for training, validation, and testing.",
     )
     parser.add_argument(
-        "--save",
-        action="store_true",
-        default=False,
-        help="Whether to save a model checkpoint after training",
+        "--save-path",
+        type=str,
+        default=None,
+        help="If provided, saves a model checkpoint after training",
     )
     parser.add_argument(
         "--lr", type=float, default=0.001, help="Learning rate for the optimizer."
@@ -104,6 +112,9 @@ def main():
     # --- 4. Model, Optimizer, and Loss Function ---
     device = "cuda" if torch.cuda.is_available() else "cpu"
     model = QNN().to(device)
+    qnn_params = count_parameters(model)
+    print(f"QNN has {qnn_params:,} trainable parameters.")
+    wandb.summary['parameters'] = qnn_params
     optimizer = optim.Adam(model.parameters(), lr=config.learning_rate)
     criterion = nn.CrossEntropyLoss()
 
@@ -165,10 +176,10 @@ def main():
                 "validation_accuracy": val_accuracy,
             }
         )
-    if args.save:
+    if args.save_path:
         print("\nFinished Training.")
         os.makedirs("./saved_models", exist_ok=True)
-        model_path = f"./saved_models/cifar10_qnn.pt"
+        model_path = "./saved_models/" + args.save_path + ".pt"
         torch.save(model.state_dict(), model_path)
         print(f"Model saved to {model_path}")
 

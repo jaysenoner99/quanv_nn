@@ -1,4 +1,3 @@
-import torch
 from torchvision import datasets, transforms
 from quanv_layer import quanv_layer
 import matplotlib.pyplot as plt
@@ -33,5 +32,5 @@ for i in range(4):
 plt.suptitle("Comparison of Original Image and Quantum Features")
 plt.tight_layout()
 plt.show()
-plt.savefig("quantum_features_visualization.png")
+plt.savefig("./images/quantum_features_visualization.png")
 print("Saved visualization to quantum_features_visualization.png")
