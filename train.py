@@ -27,8 +27,10 @@ class QuantumProcessedDataset(Dataset):
     def __getitem__(self, idx):
         return self.data[idx]
 
+
 def count_parameters(model):
     return sum(p.numel() for p in model.parameters() if p.requires_grad)
+
 
 # --- Main Execution ---
 def main():
@@ -46,7 +48,7 @@ def main():
         help="Batch size for training, validation, and testing.",
     )
     parser.add_argument(
-        "--save-path",
+        "--save_path",
         type=str,
         default=None,
         help="If provided, saves a model checkpoint after training",
@@ -55,13 +57,13 @@ def main():
         "--lr", type=float, default=0.001, help="Learning rate for the optimizer."
     )
     parser.add_argument(
-        "--path-train",
+        "--path_train",
         type=str,
         default="processed_train_mnist.pt",
         help="Path to quantum processed training data in the ./data/ directory",
     )
     parser.add_argument(
-        "--path-test",
+        "--path_test",
         type=str,
         default="processed_test_mnist.pt",
         help="Path to quantum processed test data in the ./data/ directory",
@@ -114,7 +116,7 @@ def main():
     model = QNN().to(device)
     qnn_params = count_parameters(model)
     print(f"QNN has {qnn_params:,} trainable parameters.")
-    wandb.summary['parameters'] = qnn_params
+    wandb.summary["parameters"] = qnn_params
     optimizer = optim.Adam(model.parameters(), lr=config.learning_rate)
     criterion = nn.CrossEntropyLoss()
 

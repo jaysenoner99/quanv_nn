@@ -136,7 +136,6 @@ def main():
     indices = np.random.choice(
         classical_features.shape[0], config.num_samples, replace=False
     )
-
     print(f"Running t-SNE on {config.num_samples} samples...")
     tsne = TSNE(n_components=2, perplexity=30, random_state=42, max_iter=1000)
 

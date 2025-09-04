@@ -42,7 +42,7 @@ def main():
     parser.add_argument(
         "--dataset",
         type=str,
-        choices=["mnist", "fmnist", "kmnist", "cifar10"],
+        choices=["mnist", "fmnist", "kmnist", "cifar10","cifar10_2l", "fmnist_2l", "mnist_2l"],
         default="mnist",
         help="Dataset to preprocess",
     )
@@ -72,7 +72,7 @@ def main():
         test_dataset = datasets.KMNIST(
             root="./data", train=False, download=True, transform=transform
         )
-    elif dataset == "cifar10":
+    elif dataset == "cifar10" or dataset == "cifar10_2l":
         cifar_transform = transforms.Compose(
             [
                 transforms.Grayscale(num_output_channels=1),  # RGB → grayscale

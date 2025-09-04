@@ -2,6 +2,19 @@ import torch
 import torch.nn as nn
 
 
+class MinimalClassifier(nn.Module):
+    def __init__(self, input_features, num_classes=10):
+        super().__init__()
+        self.flatten = nn.Flatten()
+        self.fc = nn.Linear(input_features, num_classes)
+
+    def forward(self, x):
+        # The QNN version needs to permute first
+        if x.shape[-1] == 4:  # Heuristic for quantum data
+            x = x.permute(0, 3, 1, 2)
+        return self.fc(self.flatten(x))
+
+
 class QNN(nn.Module):
     def __init__(self):
         super(QNN, self).__init__()
