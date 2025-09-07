@@ -26,6 +26,10 @@ class QuantumProcessedDataset(Dataset):
         return self.data[idx]
 
 
+def count_parameters(model):
+    return sum(p.numel() for p in model.parameters() if p.requires_grad)
+
+
 def generate_classical_features(dataset_name, model_path, device, train: bool):
     """
     Loads a dataset (train or test), passes it through a pre-trained classical
@@ -147,6 +151,9 @@ def main():
     print(f"Training Minimal Classifier on {config.feature_type} features...")
     model = MinimalClassifier(input_features=input_features, num_classes=10)
 
+    minimal_params = count_parameters(model)
+    print(f"Linear Model has {minimal_params:,} trainable parameters.")
+    wandb.summary["parameters"] = minimal_params
     test_accuracy = train_and_evaluate(
         model=model,
         train_loader=train_loader,

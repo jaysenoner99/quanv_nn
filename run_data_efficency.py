@@ -47,7 +47,7 @@ def main():
     parser.add_argument(
         "--dataset",
         type=str,
-        choices=["mnist", "fmnist", "kmnist"],
+        choices=["mnist", "fmnist", "kmnist", "cifar10"],
         default="mnist",
         help="Dataset to use.",
     )
