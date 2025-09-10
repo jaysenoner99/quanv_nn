@@ -60,7 +60,10 @@ The repository is organized into several key scripts, each with a specific purpo
     python -m venv venv
     source venv/bin/activate 
     ```
-    Key packages include: `torch`, `torchvision`, `pennylane`, `pennylane-lightning`, `wandb`, `scikit-learn`, `matplotlib`, and `tqdm`.
+3. Install all the required packages:
+    ```bash
+    pip install -r requirements.txt
+    ```
 
 4.  **Log in to Weights & Biases:**
     You will need a free W&B account to log your experiments.
